@@ -13,12 +13,22 @@ export type Product = {
 
 export type ProductInput = Omit<Product, "id"> & { id?: string };
 
-export const PRODUCT_CATEGORIES = [
-  "Dormitorio",
-  "Living",
-  "Cocina",
-  "Comedor",
-  "Baño",
-  "Iluminación",
-  "Otros",
-] as const;
+export type Category = {
+  id: string;
+  name: string;
+};
+
+export type CategoryInput = {
+  name: string;
+};
+
+/** Categorías iniciales (seed). La lista viva está en data/categories.json. */
+export const DEFAULT_CATEGORIES: Category[] = [
+  { id: "cat-dormitorio", name: "Dormitorio" },
+  { id: "cat-living", name: "Living" },
+  { id: "cat-cocina", name: "Cocina" },
+  { id: "cat-comedor", name: "Comedor" },
+  { id: "cat-bano", name: "Baño" },
+  { id: "cat-iluminacion", name: "Iluminación" },
+  { id: "cat-otros", name: "Otros" },
+];

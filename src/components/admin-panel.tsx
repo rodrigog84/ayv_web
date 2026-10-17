@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCLP } from "@/lib/format";
-import { PRODUCT_CATEGORIES, type Product } from "@/lib/types";
+import type { Category, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type FormState = {
@@ -30,16 +30,18 @@ type FormState = {
   onSale: boolean;
 };
 
-const emptyForm: FormState = {
-  name: "",
-  price: "",
-  compareAtPrice: "",
-  description: "",
-  imageUrl: "",
-  category: "Living",
-  featured: false,
-  onSale: false,
-};
+function emptyForm(defaultCategory: string): FormState {
+  return {
+    name: "",
+    price: "",
+    compareAtPrice: "",
+    description: "",
+    imageUrl: "",
+    category: defaultCategory,
+    featured: false,
+    onSale: false,
+  };
+}
 
 function toForm(product: Product): FormState {
   return {
@@ -84,18 +86,31 @@ function FlagToggle({
 
 export function AdminPanel({
   initialProducts,
+  initialCategories,
   persistence,
 }: {
   initialProducts: Product[];
+  initialCategories: Category[];
   persistence: "blob" | "local";
 }) {
+  const defaultCategory = initialCategories[0]?.name || "Otros";
   const [products, setProducts] = useState(initialProducts);
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [categories, setCategories] = useState(initialCategories);
+  const [form, setForm] = useState<FormState>(() => emptyForm(defaultCategory));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [categoryMessage, setCategoryMessage] = useState<string | null>(null);
+  const [categoryBusy, setCategoryBusy] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null,
+  );
+  const [editingCategoryName, setEditingCategoryName] = useState("");
 
   const title = useMemo(
     () => (editingId ? "Editar producto" : "Nuevo producto"),
@@ -105,10 +120,25 @@ export function AdminPanel({
   const offerCount = products.filter((p) => p.onSale).length;
   const featuredCount = products.filter((p) => p.featured).length;
 
-  async function refresh() {
+  const productCountByCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const p of products) {
+      map.set(p.category, (map.get(p.category) || 0) + 1);
+    }
+    return map;
+  }, [products]);
+
+  async function refreshProducts() {
     const res = await fetch("/api/products", { cache: "no-store" });
     const data = (await res.json()) as { products: Product[] };
     setProducts(data.products);
+  }
+
+  async function refreshCategories() {
+    const res = await fetch("/api/categories", { cache: "no-store" });
+    const data = (await res.json()) as { categories: Category[] };
+    setCategories(data.categories);
+    return data.categories;
   }
 
   function payloadFromForm() {
@@ -145,10 +175,11 @@ export function AdminPanel({
       setError(data?.error || "No se pudo guardar");
       return;
     }
-    setForm(emptyForm);
+    const first = categories[0]?.name || defaultCategory;
+    setForm(emptyForm(first));
     setEditingId(null);
     setMessage(editingId ? "Producto actualizado" : "Producto creado");
-    await refresh();
+    await refreshProducts();
   }
 
   async function onDelete(id: string) {
@@ -161,10 +192,10 @@ export function AdminPanel({
     }
     if (editingId === id) {
       setEditingId(null);
-      setForm(emptyForm);
+      setForm(emptyForm(categories[0]?.name || defaultCategory));
     }
     setMessage("Producto eliminado");
-    await refresh();
+    await refreshProducts();
   }
 
   async function toggleFlag(
@@ -198,7 +229,90 @@ export function AdminPanel({
         [field]: !product[field],
       }));
     }
-    await refresh();
+    await refreshProducts();
+  }
+
+  async function onCreateCategory(e: React.FormEvent) {
+    e.preventDefault();
+    setCategoryBusy(true);
+    setCategoryError(null);
+    setCategoryMessage(null);
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newCategoryName }),
+    });
+    setCategoryBusy(false);
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      setCategoryError(data?.error || "No se pudo crear la categoría");
+      return;
+    }
+    setNewCategoryName("");
+    setCategoryMessage("Categoría creada");
+    const next = await refreshCategories();
+    if (!form.category && next[0]) {
+      setForm((f) => ({ ...f, category: next[0].name }));
+    }
+  }
+
+  async function onRenameCategory(id: string) {
+    const previousName = categories.find((c) => c.id === id)?.name;
+    setCategoryBusy(true);
+    setCategoryError(null);
+    setCategoryMessage(null);
+    const res = await fetch(`/api/categories/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editingCategoryName }),
+    });
+    setCategoryBusy(false);
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      setCategoryError(data?.error || "No se pudo renombrar");
+      return;
+    }
+    const data = (await res.json()) as { category: Category };
+    setEditingCategoryId(null);
+    setEditingCategoryName("");
+    setCategoryMessage("Categoría renombrada");
+    await refreshCategories();
+    await refreshProducts();
+    if (previousName && form.category === previousName) {
+      setForm((f) => ({ ...f, category: data.category.name }));
+    }
+  }
+
+  async function onDeleteCategory(category: Category) {
+    const used = productCountByCategory.get(category.name) || 0;
+    if (used > 0) {
+      setCategoryError(
+        `No se puede eliminar “${category.name}”: hay ${used} producto${used === 1 ? "" : "s"} usándola. Reasigna o elimina esos productos primero.`,
+      );
+      setCategoryMessage(null);
+      return;
+    }
+    if (!confirm(`¿Eliminar la categoría “${category.name}”?`)) return;
+    setCategoryBusy(true);
+    setCategoryError(null);
+    setCategoryMessage(null);
+    const res = await fetch(`/api/categories/${category.id}`, {
+      method: "DELETE",
+    });
+    setCategoryBusy(false);
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      setCategoryError(data?.error || "No se pudo eliminar la categoría");
+      return;
+    }
+    setCategoryMessage("Categoría eliminada");
+    const next = await refreshCategories();
+    if (form.category === category.name) {
+      setForm((f) => ({
+        ...f,
+        category: next[0]?.name || "",
+      }));
+    }
   }
 
   async function onLogout() {
@@ -217,8 +331,8 @@ export function AdminPanel({
             Administración
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {products.length} productos · {featuredCount} destacados · {offerCount}{" "}
-            ofertas · Persistencia:{" "}
+            {products.length} productos · {categories.length} categorías ·{" "}
+            {featuredCount} destacados · {offerCount} ofertas · Persistencia:{" "}
             <span className="font-medium text-charcoal">
               {persistence === "blob" ? "Vercel Blob" : "archivo local (dev)"}
             </span>
@@ -228,6 +342,130 @@ export function AdminPanel({
           Cerrar sesión
         </Button>
       </div>
+
+      <section className="mb-10 rounded-xl border border-border bg-background p-5">
+        <div className="mb-4">
+          <h2 className="font-heading text-xl">Categorías</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Crea, renombra o elimina categorías. No se puede eliminar una que
+            todavía usen productos.
+          </p>
+        </div>
+
+        <form
+          onSubmit={onCreateCategory}
+          className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end"
+        >
+          <div className="min-w-0 flex-1 space-y-2">
+            <Label htmlFor="newCategory">Nueva categoría</Label>
+            <Input
+              id="newCategory"
+              placeholder="Ej: Terraza"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              required
+            />
+          </div>
+          <Button
+            type="submit"
+            disabled={categoryBusy || !newCategoryName.trim()}
+            className="bg-sky text-white hover:bg-sky/90"
+          >
+            {categoryBusy ? "Guardando…" : "Crear"}
+          </Button>
+        </form>
+
+        {categoryError ? (
+          <p className="mb-3 text-sm text-destructive">{categoryError}</p>
+        ) : null}
+        {categoryMessage ? (
+          <p className="mb-3 text-sm text-sky">{categoryMessage}</p>
+        ) : null}
+
+        {categories.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Aún no hay categorías. Crea la primera para poder asignarla a
+            productos.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {categories.map((cat) => {
+              const used = productCountByCategory.get(cat.name) || 0;
+              const isEditing = editingCategoryId === cat.id;
+              return (
+                <li
+                  key={cat.id}
+                  className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  {isEditing ? (
+                    <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                      <Input
+                        value={editingCategoryName}
+                        onChange={(e) => setEditingCategoryName(e.target.value)}
+                        className="sm:max-w-xs"
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          disabled={categoryBusy || !editingCategoryName.trim()}
+                          onClick={() => void onRenameCategory(cat.id)}
+                          className="bg-sky text-white hover:bg-sky/90"
+                        >
+                          Guardar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingCategoryId(null);
+                            setEditingCategoryName("");
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="min-w-0">
+                        <p className="font-medium">{cat.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {used === 0
+                            ? "Sin productos"
+                            : `${used} producto${used === 1 ? "" : "s"}`}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingCategoryId(cat.id);
+                            setEditingCategoryName(cat.name);
+                            setCategoryError(null);
+                            setCategoryMessage(null);
+                          }}
+                        >
+                          Renombrar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={categoryBusy}
+                          onClick={() => void onDeleteCategory(cat)}
+                        >
+                          Eliminar
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr]">
         <form
@@ -283,23 +521,32 @@ export function AdminPanel({
           </div>
           <div className="space-y-2">
             <Label htmlFor="category">Categoría</Label>
-            <Select
-              value={form.category}
-              onValueChange={(value) =>
-                setForm((f) => ({ ...f, category: value ?? "Otros" }))
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Categoría" />
-              </SelectTrigger>
-              <SelectContent>
-                {PRODUCT_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {categories.length === 0 ? (
+              <p className="text-sm text-destructive">
+                Crea al menos una categoría arriba para poder guardar productos.
+              </p>
+            ) : (
+              <Select
+                value={form.category}
+                onValueChange={(value) =>
+                  setForm((f) => ({
+                    ...f,
+                    category: value ?? categories[0]?.name ?? "",
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full" id="category">
+                  <SelectValue placeholder="Categoría" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="imageUrl">URL de imagen</Label>
@@ -362,7 +609,11 @@ export function AdminPanel({
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           {message ? <p className="text-sm text-sky">{message}</p> : null}
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={saving} className="bg-sky text-white hover:bg-sky/90">
+            <Button
+              type="submit"
+              disabled={saving || categories.length === 0}
+              className="bg-sky text-white hover:bg-sky/90"
+            >
               {saving ? "Guardando…" : editingId ? "Guardar cambios" : "Crear producto"}
             </Button>
             {editingId ? (
@@ -371,7 +622,7 @@ export function AdminPanel({
                 variant="outline"
                 onClick={() => {
                   setEditingId(null);
-                  setForm(emptyForm);
+                  setForm(emptyForm(categories[0]?.name || defaultCategory));
                   setMessage(null);
                 }}
               >

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
+import { categoryExists } from "@/lib/categories";
 import { createProduct, getProducts, persistenceMode } from "@/lib/products";
 import type { ProductInput } from "@/lib/types";
 
@@ -16,6 +17,12 @@ export async function POST(request: Request) {
   if (!body?.name || body.price == null || !body.imageUrl || !body.category) {
     return NextResponse.json(
       { error: "Faltan campos obligatorios" },
+      { status: 400 },
+    );
+  }
+  if (!(await categoryExists(body.category))) {
+    return NextResponse.json(
+      { error: "La categoría no existe. Elige una de la lista administrada." },
       { status: 400 },
     );
   }

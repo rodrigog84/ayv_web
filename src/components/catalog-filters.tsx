@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
-import type { Product } from "@/lib/types";
+import type { Category, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "featured" | "onSale";
@@ -15,7 +15,13 @@ function initialFilter(raw: string | null): Filter {
   return "all";
 }
 
-export function CatalogFilters({ products }: { products: Product[] }) {
+export function CatalogFilters({
+  products,
+  categories: managedCategories,
+}: {
+  products: Product[];
+  categories: Category[];
+}) {
   const searchParams = useSearchParams();
   const [filter, setFilter] = useState<Filter>(() =>
     initialFilter(searchParams.get("filtro")),
@@ -23,9 +29,16 @@ export function CatalogFilters({ products }: { products: Product[] }) {
   const [category, setCategory] = useState<string>("Todas");
 
   const categories = useMemo(() => {
-    const set = new Set(products.map((p) => p.category));
-    return ["Todas", ...Array.from(set).sort()];
-  }, [products]);
+    const names = managedCategories.map((c) => c.name);
+    // Include orphan product categories so filters still work
+    const orphans = products
+      .map((p) => p.category)
+      .filter((name) => name && !names.includes(name));
+    const uniqueOrphans = Array.from(new Set(orphans)).sort((a, b) =>
+      a.localeCompare(b, "es", { sensitivity: "base" }),
+    );
+    return ["Todas", ...names, ...uniqueOrphans];
+  }, [managedCategories, products]);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {

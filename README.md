@@ -29,8 +29,11 @@ Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/products.json` (adecuado p
 
 1. Ve a `/admin`
 2. Ingresa la contraseña (`ADMIN_PASSWORD` o `ayv-admin-local` en local)
-3. Crea, edita o elimina productos (nombre, precio, precio anterior opcional, descripción, URL de imagen, categoría, destacado, oferta)
-4. En la lista puedes activar/desactivar **Oferta** y **Destacado** con un toque
+3. Gestiona **categorías** (crear, renombrar, eliminar). No se puede eliminar una categoría si aún tienen productos.
+4. Crea, edita o elimina productos (nombre, precio, precio anterior opcional, descripción, URL de imagen, categoría de la lista, destacado, oferta)
+5. En la lista puedes activar/desactivar **Oferta** y **Destacado** con un toque
+
+Las categorías se guardan en `data/categories.json` (local) o Vercel Blob (`ayv-outlet/categories.json`), igual que los productos.
 
 ## WhatsApp e Instagram
 

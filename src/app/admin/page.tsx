@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { AdminLogin } from "@/components/admin-login";
 import { AdminPanel } from "@/components/admin-panel";
 import { isAdminAuthenticated } from "@/lib/auth";
+import { getCategories } from "@/lib/categories";
 import { getProducts, persistenceMode } from "@/lib/products";
 
 export const metadata: Metadata = {
@@ -16,8 +17,15 @@ export default async function AdminPage() {
   if (!authed) {
     return <AdminLogin />;
   }
-  const products = await getProducts();
+  const [products, categories] = await Promise.all([
+    getProducts(),
+    getCategories(),
+  ]);
   return (
-    <AdminPanel initialProducts={products} persistence={persistenceMode()} />
+    <AdminPanel
+      initialProducts={products}
+      initialCategories={categories}
+      persistence={persistenceMode()}
+    />
   );
 }

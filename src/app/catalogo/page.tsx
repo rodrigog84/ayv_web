@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { CatalogFilters } from "@/components/catalog-filters";
+import { getCategories } from "@/lib/categories";
 import { getProducts } from "@/lib/products";
 
 export const metadata: Metadata = {
@@ -10,7 +11,10 @@ export const metadata: Metadata = {
 
 export default async function CatalogPage() {
   await connection();
-  const products = await getProducts();
+  const [products, categories] = await Promise.all([
+    getProducts(),
+    getCategories(),
+  ]);
   const featuredCount = products.filter((p) => p.featured).length;
   const offerCount = products.filter((p) => p.onSale).length;
 
@@ -27,7 +31,7 @@ export default async function CatalogPage() {
       </div>
       <div className="mt-10">
         <Suspense fallback={<p className="text-muted-foreground">Cargando catálogo…</p>}>
-          <CatalogFilters products={products} />
+          <CatalogFilters products={products} categories={categories} />
         </Suspense>
       </div>
     </div>

@@ -1,0 +1,9 @@
+[
+  { "id": "cat-dormitorio", "name": "Dormitorio" },
+  { "id": "cat-living", "name": "Living" },
+  { "id": "cat-cocina", "name": "Cocina" },
+  { "id": "cat-comedor", "name": "Comedor" },
+  { "id": "cat-bano", "name": "Baño" },
+  { "id": "cat-iluminacion", "name": "Iluminación" },
+  { "id": "cat-otros", "name": "Otros" }
+]
