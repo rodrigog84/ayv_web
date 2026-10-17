@@ -34,7 +34,7 @@
     "name": "Mantel de lino 6 personas",
     "price": 29990,
     "description": "Mantel de lino lavado en tono natural. Cubre mesa para 6 personas, textura elegante y fácil de combinar con vajilla diaria o de ocasión.",
-    "imageUrl": "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&q=80",
+    "imageUrl": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80",
     "category": "Comedor",
     "featured": true,
     "onSale": false
@@ -44,7 +44,7 @@
     "name": "Set de toallas de baño (4 piezas)",
     "price": 21990,
     "description": "Set de 2 toallas de cuerpo y 2 de mano en algodón absorbente. Suaves al tacto y resistentes al lavado frecuente.",
-    "imageUrl": "https://images.unsplash.com/photo-1631889993959-41b4e9c6e3c5?w=800&q=80",
+    "imageUrl": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&q=80",
     "category": "Baño",
     "featured": false,
     "onSale": false
@@ -74,7 +74,7 @@
     "name": "Alfombra de entrada lavable",
     "price": 17990,
     "description": "Alfombra antideslizante para hall o cocina. Superficie lavable y resistente al tráfico diario. Medida aproximada 80 × 120 cm.",
-    "imageUrl": "https://images.unsplash.com/photo-1600166898405-da9538865060?w=800&q=80",
+    "imageUrl": "https://images.unsplash.com/photo-1615529328331-f8917597711f?w=800&q=80",
     "category": "Living",
     "featured": false,
     "onSale": true
