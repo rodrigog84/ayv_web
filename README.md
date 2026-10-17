@@ -38,15 +38,34 @@ Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/products.json` (adecuado p
 
 En el detalle de producto, **Me interesa** abre WhatsApp con un mensaje precargado.
 
-## Deploy en Vercel
+## Variables de entorno
 
-1. Importa el repositorio en Vercel
-2. Configura:
-   - `ADMIN_PASSWORD` — contraseña fuerte para producción
-   - `BLOB_READ_WRITE_TOKEN` — crea un store de [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) y pega el token de lectura/escritura
-3. Deploy
+| Variable | Obligatoria | Descripción |
+|---|---|---|
+| `ADMIN_PASSWORD` | Sí en producción | Contraseña de `/admin` (default local: `ayv-admin-local`) |
+| `BLOB_READ_WRITE_TOKEN` | Recomendada en Vercel | Persistencia del catálogo vía [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) |
 
-Con Blob activo, el catálogo persiste entre deploys y serverless. Sin Blob, el seed de `data/products.json` se sirve, pero los cambios del admin no sobreviven en el filesystem efímero de Vercel.
+Ver también `.env.example`.
+
+## Deploy en GitHub + Vercel
+
+1. Crea un repo vacío en GitHub (p. ej. `ayv-outlet`), sin README.
+2. Empuja el MVP como `main`:
+
+```bash
+git remote add github https://github.com/TU_USUARIO/ayv-outlet.git
+git push -u github cursor/ayv-outlet-mvp-d081:main
+```
+
+3. En [vercel.com/new](https://vercel.com/new): **Import** el repo → Framework Next.js.
+4. Environment Variables:
+   - `ADMIN_PASSWORD` — contraseña fuerte (no uses el default local en producción)
+   - `BLOB_READ_WRITE_TOKEN` — opcional; crea un Blob store en el proyecto y conéctalo (recomendado)
+5. **Deploy** y abre la URL `*.vercel.app`.
+
+Con Blob activo, el catálogo persiste entre deploys. Sin Blob, se sirve el seed de `data/products.json`, pero los cambios del admin no sobreviven en el filesystem efímero de Vercel.
+
+Guía detallada (copy-paste): en el Context del proyecto, `docs/deploy-vercel.md`.
 
 ## Scripts
 
