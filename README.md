@@ -29,7 +29,8 @@ Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/products.json` (adecuado p
 
 1. Ve a `/admin`
 2. Ingresa la contraseña (`ADMIN_PASSWORD` o `ayv-admin-local` en local)
-3. Crea, edita o elimina productos (nombre, precio, descripción, URL de imagen, categoría, destacado, oferta)
+3. Crea, edita o elimina productos (nombre, precio, precio anterior opcional, descripción, URL de imagen, categoría, destacado, oferta)
+4. En la lista puedes activar/desactivar **Oferta** y **Destacado** con un toque
 
 ## WhatsApp e Instagram
 

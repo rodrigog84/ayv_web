@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/lib/types";
@@ -8,8 +9,17 @@ import { cn } from "@/lib/utils";
 
 type Filter = "all" | "featured" | "onSale";
 
+function initialFilter(raw: string | null): Filter {
+  if (raw === "ofertas" || raw === "onSale") return "onSale";
+  if (raw === "destacados" || raw === "featured") return "featured";
+  return "all";
+}
+
 export function CatalogFilters({ products }: { products: Product[] }) {
-  const [filter, setFilter] = useState<Filter>("all");
+  const searchParams = useSearchParams();
+  const [filter, setFilter] = useState<Filter>(() =>
+    initialFilter(searchParams.get("filtro")),
+  );
   const [category, setCategory] = useState<string>("Todas");
 
   const categories = useMemo(() => {

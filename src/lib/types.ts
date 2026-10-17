@@ -2,6 +2,8 @@ export type Product = {
   id: string;
   name: string;
   price: number;
+  /** Precio anterior (tachado) cuando hay oferta. */
+  compareAtPrice?: number | null;
   description: string;
   imageUrl: string;
   category: string;

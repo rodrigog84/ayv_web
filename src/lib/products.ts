@@ -11,13 +11,27 @@ function hasBlobToken(): boolean {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
+function normalizeCompareAt(
+  price: number,
+  compareAt: unknown,
+): number | null {
+  if (compareAt == null || compareAt === "") return null;
+  const n = Number(compareAt);
+  if (!Number.isFinite(n) || n <= price) return null;
+  return n;
+}
+
 function normalize(products: Product[]): Product[] {
-  return products.map((p) => ({
-    ...p,
-    featured: Boolean(p.featured),
-    onSale: Boolean(p.onSale),
-    price: Number(p.price),
-  }));
+  return products.map((p) => {
+    const price = Number(p.price);
+    return {
+      ...p,
+      featured: Boolean(p.featured),
+      onSale: Boolean(p.onSale),
+      price,
+      compareAtPrice: normalizeCompareAt(price, p.compareAtPrice),
+    };
+  });
 }
 
 async function readLocal(): Promise<Product[]> {
@@ -101,18 +115,24 @@ function slugId(name: string): string {
   return `prod-${base || "item"}-${Date.now().toString(36)}`;
 }
 
-export async function createProduct(input: ProductInput): Promise<Product> {
-  const products = await getProducts();
-  const product: Product = {
-    id: input.id || slugId(input.name),
+function toProduct(id: string, input: ProductInput): Product {
+  const price = Number(input.price);
+  return {
+    id,
     name: input.name.trim(),
-    price: Number(input.price),
+    price,
+    compareAtPrice: normalizeCompareAt(price, input.compareAtPrice),
     description: input.description.trim(),
     imageUrl: input.imageUrl.trim(),
     category: input.category.trim(),
     featured: Boolean(input.featured),
     onSale: Boolean(input.onSale),
   };
+}
+
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const products = await getProducts();
+  const product = toProduct(input.id || slugId(input.name), input);
   products.push(product);
   await saveProducts(products);
   return product;
@@ -125,16 +145,7 @@ export async function updateProduct(
   const products = await getProducts();
   const idx = products.findIndex((p) => p.id === id);
   if (idx === -1) return null;
-  const updated: Product = {
-    id,
-    name: input.name.trim(),
-    price: Number(input.price),
-    description: input.description.trim(),
-    imageUrl: input.imageUrl.trim(),
-    category: input.category.trim(),
-    featured: Boolean(input.featured),
-    onSale: Boolean(input.onSale),
-  };
+  const updated = toProduct(id, input);
   products[idx] = updated;
   await saveProducts(products);
   return updated;

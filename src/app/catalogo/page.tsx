@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { connection } from "next/server";
 import { CatalogFilters } from "@/components/catalog-filters";
 import { getProducts } from "@/lib/products";
@@ -25,7 +26,9 @@ export default async function CatalogPage() {
         </p>
       </div>
       <div className="mt-10">
-        <CatalogFilters products={products} />
+        <Suspense fallback={<p className="text-muted-foreground">Cargando catálogo…</p>}>
+          <CatalogFilters products={products} />
+        </Suspense>
       </div>
     </div>
   );

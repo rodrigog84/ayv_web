@@ -22,6 +22,7 @@ export async function POST(request: Request) {
   const product = await createProduct({
     name: body.name,
     price: Number(body.price),
+    compareAtPrice: body.compareAtPrice,
     description: body.description || "",
     imageUrl: body.imageUrl,
     category: body.category,

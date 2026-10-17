@@ -40,6 +40,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
   if (!product) notFound();
 
   const interestUrl = whatsappUrl(productInterestMessage(product.name));
+  const showStrike =
+    product.onSale &&
+    product.compareAtPrice != null &&
+    product.compareAtPrice > product.price;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
@@ -60,22 +64,45 @@ export default async function ProductDetailPage({ params }: PageProps) {
             className="object-cover"
             sizes="(max-width: 1024px) 100vw, 50vw"
           />
+          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+            {product.onSale ? (
+              <Badge className="h-7 border-0 bg-sky px-3 text-xs font-bold uppercase tracking-wide text-white hover:bg-sky">
+                Oferta
+              </Badge>
+            ) : null}
+            {product.featured ? (
+              <Badge className="h-7 border border-charcoal/20 bg-white/95 px-3 text-xs font-bold uppercase tracking-wide text-charcoal hover:bg-white">
+                Destacado
+              </Badge>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex flex-col">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{product.category}</Badge>
-            {product.onSale ? (
-              <Badge className="bg-sky text-white hover:bg-sky">Oferta</Badge>
-            ) : null}
-            {product.featured ? <Badge variant="outline">Destacado</Badge> : null}
-          </div>
+          <Badge variant="secondary" className="w-fit">
+            {product.category}
+          </Badge>
           <h1 className="mt-4 font-heading text-4xl text-foreground">
             {product.name}
           </h1>
-          <p className="mt-3 text-2xl font-medium text-charcoal">
-            {formatCLP(product.price)}
-          </p>
+          <div className="mt-4 flex flex-wrap items-baseline gap-3">
+            {showStrike ? (
+              <>
+                <span className="text-lg text-muted-foreground line-through">
+                  {formatCLP(product.compareAtPrice!)}
+                </span>
+                <span className="text-3xl font-semibold text-sky">
+                  {formatCLP(product.price)}
+                </span>
+              </>
+            ) : (
+              <p
+                className={`text-3xl font-medium ${product.onSale ? "text-sky" : "text-charcoal"}`}
+              >
+                {formatCLP(product.price)}
+              </p>
+            )}
+          </div>
           <p className="mt-6 text-base leading-relaxed text-charcoal">
             {product.description}
           </p>

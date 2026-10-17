@@ -20,6 +20,7 @@ export async function PUT(request: Request, context: RouteContext) {
   const product = await updateProduct(id, {
     name: body.name,
     price: Number(body.price),
+    compareAtPrice: body.compareAtPrice,
     description: body.description || "",
     imageUrl: body.imageUrl,
     category: body.category,
