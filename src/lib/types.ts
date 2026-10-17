@@ -22,6 +22,25 @@ export type CategoryInput = {
   name: string;
 };
 
+export type Announcement = {
+  id: string;
+  title: string;
+  body: string;
+  imageUrl?: string | null;
+  /** Fecha/hora libre, ej. "Viernes 19:30" o ISO. */
+  eventDateTime?: string | null;
+  ctaLabel?: string | null;
+  ctaUrl?: string | null;
+  active: boolean;
+  pinned: boolean;
+  createdAt: string;
+};
+
+export type AnnouncementInput = Omit<Announcement, "id" | "createdAt"> & {
+  id?: string;
+  createdAt?: string;
+};
+
 /** Categorías iniciales (seed). La lista viva está en data/categories.json. */
 export const DEFAULT_CATEGORIES: Category[] = [
   { id: "cat-dormitorio", name: "Dormitorio" },

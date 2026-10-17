@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
+import { AnnouncementCard } from "@/components/announcement-card";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
+import { getActiveAnnouncements } from "@/lib/announcements";
 import { getProducts } from "@/lib/products";
 import {
   generalWhatsAppMessage,
@@ -11,11 +13,15 @@ import {
 
 export default async function HomePage() {
   await connection();
-  const products = await getProducts();
+  const [products, announcements] = await Promise.all([
+    getProducts(),
+    getActiveAnnouncements(),
+  ]);
   const picks = products
     .filter((p) => p.featured || p.onSale)
     .sort((a, b) => Number(b.onSale) - Number(a.onSale) || Number(b.featured) - Number(a.featured))
     .slice(0, 6);
+  const homeAnnouncements = announcements.slice(0, 4);
 
   return (
     <>
@@ -89,6 +95,39 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {homeAnnouncements.length > 0 ? (
+        <section className="border-t border-border/60 bg-background">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-wide text-sky">
+                Avisos y novedades
+              </p>
+              <h2 className="mt-2 font-heading text-3xl text-foreground sm:text-4xl">
+                Lo que está pasando
+              </h2>
+              <p className="mt-3 text-base text-charcoal">
+                Lives, campañas y novedades de A & V Outlet. Los avisos fijados
+                aparecen primero.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-6 sm:grid-cols-2">
+              {homeAnnouncements.map((item) => (
+                <AnnouncementCard key={item.id} announcement={item} />
+              ))}
+            </div>
+
+            {announcements.length > homeAnnouncements.length ? (
+              <div className="mt-8">
+                <Button asChild variant="outline" size="lg" className="h-11">
+                  <Link href="/novedades">Ver todas las novedades</Link>
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <section className="border-t border-border/60 bg-soft/40">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">

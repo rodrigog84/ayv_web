@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCLP } from "@/lib/format";
-import type { Category, Product } from "@/lib/types";
+import type { Announcement, Category, Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type FormState = {
@@ -29,6 +29,43 @@ type FormState = {
   featured: boolean;
   onSale: boolean;
 };
+
+type AnnouncementFormState = {
+  title: string;
+  body: string;
+  imageUrl: string;
+  eventDateTime: string;
+  ctaLabel: string;
+  ctaUrl: string;
+  active: boolean;
+  pinned: boolean;
+};
+
+function emptyAnnouncementForm(): AnnouncementFormState {
+  return {
+    title: "",
+    body: "",
+    imageUrl: "",
+    eventDateTime: "",
+    ctaLabel: "",
+    ctaUrl: "",
+    active: true,
+    pinned: false,
+  };
+}
+
+function toAnnouncementForm(a: Announcement): AnnouncementFormState {
+  return {
+    title: a.title,
+    body: a.body,
+    imageUrl: a.imageUrl || "",
+    eventDateTime: a.eventDateTime || "",
+    ctaLabel: a.ctaLabel || "",
+    ctaUrl: a.ctaUrl || "",
+    active: a.active,
+    pinned: a.pinned,
+  };
+}
 
 function emptyForm(defaultCategory: string): FormState {
   return {
@@ -87,15 +124,18 @@ function FlagToggle({
 export function AdminPanel({
   initialProducts,
   initialCategories,
+  initialAnnouncements,
   persistence,
 }: {
   initialProducts: Product[];
   initialCategories: Category[];
+  initialAnnouncements: Announcement[];
   persistence: "blob" | "local";
 }) {
   const defaultCategory = initialCategories[0]?.name || "Otros";
   const [products, setProducts] = useState(initialProducts);
   const [categories, setCategories] = useState(initialCategories);
+  const [announcements, setAnnouncements] = useState(initialAnnouncements);
   const [form, setForm] = useState<FormState>(() => emptyForm(defaultCategory));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -112,13 +152,33 @@ export function AdminPanel({
   );
   const [editingCategoryName, setEditingCategoryName] = useState("");
 
+  const [announcementForm, setAnnouncementForm] = useState<AnnouncementFormState>(
+    emptyAnnouncementForm,
+  );
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState<
+    string | null
+  >(null);
+  const [announcementError, setAnnouncementError] = useState<string | null>(
+    null,
+  );
+  const [announcementMessage, setAnnouncementMessage] = useState<string | null>(
+    null,
+  );
+  const [announcementSaving, setAnnouncementSaving] = useState(false);
+
   const title = useMemo(
     () => (editingId ? "Editar producto" : "Nuevo producto"),
     [editingId],
   );
 
+  const announcementTitle = useMemo(
+    () => (editingAnnouncementId ? "Editar aviso" : "Nuevo aviso"),
+    [editingAnnouncementId],
+  );
+
   const offerCount = products.filter((p) => p.onSale).length;
   const featuredCount = products.filter((p) => p.featured).length;
+  const activeAnnouncementCount = announcements.filter((a) => a.active).length;
 
   const productCountByCategory = useMemo(() => {
     const map = new Map<string, number>();
@@ -139,6 +199,12 @@ export function AdminPanel({
     const data = (await res.json()) as { categories: Category[] };
     setCategories(data.categories);
     return data.categories;
+  }
+
+  async function refreshAnnouncements() {
+    const res = await fetch("/api/announcements", { cache: "no-store" });
+    const data = (await res.json()) as { announcements: Announcement[] };
+    setAnnouncements(data.announcements);
   }
 
   function payloadFromForm() {
@@ -315,6 +381,94 @@ export function AdminPanel({
     }
   }
 
+  async function onSubmitAnnouncement(e: React.FormEvent) {
+    e.preventDefault();
+    setAnnouncementSaving(true);
+    setAnnouncementError(null);
+    setAnnouncementMessage(null);
+    const payload = {
+      title: announcementForm.title,
+      body: announcementForm.body,
+      imageUrl: announcementForm.imageUrl || null,
+      eventDateTime: announcementForm.eventDateTime || null,
+      ctaLabel: announcementForm.ctaLabel || null,
+      ctaUrl: announcementForm.ctaUrl || null,
+      active: announcementForm.active,
+      pinned: announcementForm.pinned,
+    };
+    const url = editingAnnouncementId
+      ? `/api/announcements/${editingAnnouncementId}`
+      : "/api/announcements";
+    const method = editingAnnouncementId ? "PUT" : "POST";
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    setAnnouncementSaving(false);
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      setAnnouncementError(data?.error || "No se pudo guardar el aviso");
+      return;
+    }
+    setAnnouncementForm(emptyAnnouncementForm());
+    setEditingAnnouncementId(null);
+    setAnnouncementMessage(
+      editingAnnouncementId ? "Aviso actualizado" : "Aviso creado",
+    );
+    await refreshAnnouncements();
+  }
+
+  async function onDeleteAnnouncement(id: string) {
+    if (!confirm("¿Eliminar este aviso?")) return;
+    setAnnouncementError(null);
+    const res = await fetch(`/api/announcements/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setAnnouncementError("No se pudo eliminar el aviso");
+      return;
+    }
+    if (editingAnnouncementId === id) {
+      setEditingAnnouncementId(null);
+      setAnnouncementForm(emptyAnnouncementForm());
+    }
+    setAnnouncementMessage("Aviso eliminado");
+    await refreshAnnouncements();
+  }
+
+  async function toggleAnnouncementFlag(
+    item: Announcement,
+    field: "active" | "pinned",
+  ) {
+    setAnnouncementError(null);
+    const res = await fetch(`/api/announcements/${item.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: item.title,
+        body: item.body,
+        imageUrl: item.imageUrl,
+        eventDateTime: item.eventDateTime,
+        ctaLabel: item.ctaLabel,
+        ctaUrl: item.ctaUrl,
+        active: field === "active" ? !item.active : item.active,
+        pinned: field === "pinned" ? !item.pinned : item.pinned,
+      }),
+    });
+    if (!res.ok) {
+      setAnnouncementError("No se pudo actualizar el aviso");
+      return;
+    }
+    if (editingAnnouncementId === item.id) {
+      setAnnouncementForm((f) => ({
+        ...f,
+        [field]: !item[field],
+      }));
+    }
+    await refreshAnnouncements();
+  }
+
   async function onLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
     window.location.reload();
@@ -332,6 +486,7 @@ export function AdminPanel({
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {products.length} productos · {categories.length} categorías ·{" "}
+            {announcements.length} avisos ({activeAnnouncementCount} activos) ·{" "}
             {featuredCount} destacados · {offerCount} ofertas · Persistencia:{" "}
             <span className="font-medium text-charcoal">
               {persistence === "blob" ? "Vercel Blob" : "archivo local (dev)"}
@@ -465,6 +620,265 @@ export function AdminPanel({
             })}
           </ul>
         )}
+      </section>
+
+      <section className="mb-10 rounded-xl border border-border bg-background p-5">
+        <div className="mb-4">
+          <h2 className="font-heading text-xl">Avisos / Novedades</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Publica lives, campañas y avisos. Solo los <strong>activos</strong>{" "}
+            se muestran en inicio y en /novedades. Los <strong>fijados</strong>{" "}
+            aparecen primero.
+          </p>
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-[1fr_1.1fr]">
+          <form onSubmit={onSubmitAnnouncement} className="space-y-4">
+            <h3 className="font-heading text-lg">{announcementTitle}</h3>
+            <div className="space-y-2">
+              <Label htmlFor="avisoTitle">Título</Label>
+              <Input
+                id="avisoTitle"
+                required
+                placeholder="Ej: Live de ofertas en Instagram"
+                value={announcementForm.title}
+                onChange={(e) =>
+                  setAnnouncementForm((f) => ({ ...f, title: e.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="avisoBody">Descripción corta</Label>
+              <Textarea
+                id="avisoBody"
+                rows={3}
+                placeholder="Qué pasa, cuándo y por qué interesa…"
+                value={announcementForm.body}
+                onChange={(e) =>
+                  setAnnouncementForm((f) => ({ ...f, body: e.target.value }))
+                }
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="avisoWhen">Fecha / hora (texto)</Label>
+                <Input
+                  id="avisoWhen"
+                  placeholder="Viernes 19:30"
+                  value={announcementForm.eventDateTime}
+                  onChange={(e) =>
+                    setAnnouncementForm((f) => ({
+                      ...f,
+                      eventDateTime: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="avisoImage">URL de imagen (opcional)</Label>
+                <Input
+                  id="avisoImage"
+                  placeholder="/announcements/… o https://…"
+                  value={announcementForm.imageUrl}
+                  onChange={(e) =>
+                    setAnnouncementForm((f) => ({
+                      ...f,
+                      imageUrl: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="avisoCtaLabel">Texto del botón (opcional)</Label>
+                <Input
+                  id="avisoCtaLabel"
+                  placeholder="Ver en Instagram"
+                  value={announcementForm.ctaLabel}
+                  onChange={(e) =>
+                    setAnnouncementForm((f) => ({
+                      ...f,
+                      ctaLabel: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="avisoCtaUrl">URL del botón (opcional)</Label>
+                <Input
+                  id="avisoCtaUrl"
+                  placeholder="https://instagram.com/…"
+                  value={announcementForm.ctaUrl}
+                  onChange={(e) =>
+                    setAnnouncementForm((f) => ({
+                      ...f,
+                      ctaUrl: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-6 rounded-lg border border-sky/30 bg-accent/50 p-4">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <Checkbox
+                  checked={announcementForm.active}
+                  onCheckedChange={(checked) =>
+                    setAnnouncementForm((f) => ({
+                      ...f,
+                      active: checked === true,
+                    }))
+                  }
+                />
+                Activo
+              </label>
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <Checkbox
+                  checked={announcementForm.pinned}
+                  onCheckedChange={(checked) =>
+                    setAnnouncementForm((f) => ({
+                      ...f,
+                      pinned: checked === true,
+                    }))
+                  }
+                />
+                Fijado
+              </label>
+            </div>
+            {announcementError ? (
+              <p className="text-sm text-destructive">{announcementError}</p>
+            ) : null}
+            {announcementMessage ? (
+              <p className="text-sm text-sky">{announcementMessage}</p>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="submit"
+                disabled={announcementSaving}
+                className="bg-sky text-white hover:bg-sky/90"
+              >
+                {announcementSaving
+                  ? "Guardando…"
+                  : editingAnnouncementId
+                    ? "Guardar aviso"
+                    : "Crear aviso"}
+              </Button>
+              {editingAnnouncementId ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingAnnouncementId(null);
+                    setAnnouncementForm(emptyAnnouncementForm());
+                    setAnnouncementMessage(null);
+                  }}
+                >
+                  Cancelar
+                </Button>
+              ) : null}
+            </div>
+          </form>
+
+          <div className="space-y-3">
+            <h3 className="font-heading text-lg">
+              Avisos ({announcements.length})
+            </h3>
+            {announcements.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
+                Aún no hay avisos. Crea el primero con el formulario.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {announcements.map((item) => (
+                  <li
+                    key={item.id}
+                    className={cn(
+                      "flex gap-3 rounded-xl border bg-background p-3",
+                      editingAnnouncementId === item.id
+                        ? "border-sky/60 ring-1 ring-sky/30"
+                        : "border-border",
+                    )}
+                  >
+                    <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.title}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{item.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {item.eventDateTime || "Sin fecha"}
+                            {item.active ? " · Activo" : " · Inactivo"}
+                            {item.pinned ? " · Fijado" : ""}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.active ? (
+                            <Badge className="bg-sky text-white hover:bg-sky">
+                              Activo
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Inactivo</Badge>
+                          )}
+                          {item.pinned ? (
+                            <Badge variant="secondary">Fijado</Badge>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <FlagToggle
+                          active={item.active}
+                          label="Activo"
+                          tone="sky"
+                          onClick={() =>
+                            void toggleAnnouncementFlag(item, "active")
+                          }
+                        />
+                        <FlagToggle
+                          active={item.pinned}
+                          label="Fijado"
+                          tone="charcoal"
+                          onClick={() =>
+                            void toggleAnnouncementFlag(item, "pinned")
+                          }
+                        />
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingAnnouncementId(item.id);
+                            setAnnouncementForm(toAnnouncementForm(item));
+                            setAnnouncementMessage(null);
+                            setAnnouncementError(null);
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => void onDeleteAnnouncement(item.id)}
+                        >
+                          Eliminar
+                        </Button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </section>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_1.15fr]">

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "aviso-live-viernes",
+    "title": "Live de ofertas en Instagram",
+    "body": "Este viernes a las 19:30 te mostramos ofertas especiales en vivo. Activa la notificación y acompáñanos.",
+    "imageUrl": "/announcements/live-ofertas.png",
+    "eventDateTime": "Viernes 19:30",
+    "ctaLabel": "Ver en Instagram",
+    "ctaUrl": "https://www.instagram.com/ayvoutlet",
+    "active": true,
+    "pinned": true,
+    "createdAt": "2026-10-17T12:00:00.000Z"
+  },
+  {
+    "id": "aviso-descuentos-dieciocheros",
+    "title": "Descuentos dieciocheros",
+    "body": "Campaña especial con descuentos en productos seleccionados para el hogar. Revisa el catálogo o consulta por WhatsApp.",
+    "imageUrl": "/announcements/descuentos-dieciocheros.png",
+    "eventDateTime": "Temporada dieciochera",
+    "ctaLabel": "Ver catálogo",
+    "ctaUrl": "/catalogo",
+    "active": true,
+    "pinned": false,
+    "createdAt": "2026-10-17T12:05:00.000Z"
+  }
+]
