@@ -1,5 +1,5 @@
-export const WHATSAPP_NUMBER = "56965586116";
-export const WHATSAPP_DISPLAY = "+56 9 6558 6116";
+export const WHATSAPP_NUMBER = "56981444794";
+export const WHATSAPP_DISPLAY = "+56 9 8144 4794";
 export const INSTAGRAM_URL = "https://www.instagram.com/ayvoutlet";
 
 export function whatsappUrl(message: string): string {

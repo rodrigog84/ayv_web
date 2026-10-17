@@ -34,7 +34,7 @@ Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/products.json` (adecuado p
 
 ## WhatsApp e Instagram
 
-- WhatsApp: +56 9 6558 6116 (`56965586116`)
+- WhatsApp: +56 9 8144 4794 (`56981444794`)
 - Instagram: [instagram.com/ayvoutlet](https://www.instagram.com/ayvoutlet)
 
 En el detalle de producto, **Me interesa** abre WhatsApp con un mensaje precargado.
