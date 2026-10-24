@@ -28,11 +28,12 @@ Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/products.json` (adecuado p
 ## Admin
 
 1. Ve a `/admin`
-2. Ingresa la contraseña (`ADMIN_PASSWORD` o `ayv-admin-local` en local)
-3. Gestiona **categorías** (crear, renombrar, eliminar). No se puede eliminar una categoría si aún tienen productos.
-4. Gestiona **avisos / novedades** (lives, campañas): título, descripción, imagen opcional, fecha/hora texto, CTA, activo, fijado.
-5. Crea, edita o elimina productos (nombre, precio, precio anterior opcional, descripción, URL de imagen, categoría de la lista, destacado, oferta)
-6. En la lista puedes activar/desactivar **Oferta** y **Destacado** con un toque
+2. Ingresa la contraseña (`ADMIN_PASSWORD` o **`ayv-admin-local`** en local)
+3. Tras el login verás el **perfil administrador** con accesos a:
+   - **Productos** (`/admin/productos`) — lista + crear/editar/eliminar (imagen, precio, compareAt/oferta, destacado, categoría, descripción)
+   - **Novedades / Avisos** (`/admin/novedades`) — lista + crear/editar/eliminar (título, cuerpo, imagen, fecha/hora, CTA, activo, fijado)
+   - **Categorías** (`/admin/categorias`) — crear, renombrar, eliminar (bloqueado si aún hay productos)
+4. Navega entre secciones con la barra superior del admin. En productos puedes activar/desactivar **Oferta** y **Destacado** con un toque.
 
 Las categorías se guardan en `data/categories.json` (local) o Vercel Blob (`ayv-outlet/categories.json`), igual que los productos. Los avisos usan `data/announcements.json` / `ayv-outlet/announcements.json`.
 
