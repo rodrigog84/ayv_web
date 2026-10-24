@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { categoryExists } from "@/lib/categories";
-import { createProduct, getProducts, persistenceMode } from "@/lib/products";
+import {
+  createProduct,
+  getProducts,
+  normalizeProductImages,
+  persistenceMode,
+} from "@/lib/products";
 import type { ProductInput } from "@/lib/types";
 
 export async function GET() {
@@ -14,9 +19,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
   const body = (await request.json().catch(() => null)) as ProductInput | null;
-  if (!body?.name || body.price == null || !body.imageUrl || !body.category) {
+  if (!body?.name || body.price == null || !body.category) {
     return NextResponse.json(
       { error: "Faltan campos obligatorios" },
+      { status: 400 },
+    );
+  }
+  const { images, imageUrl } = normalizeProductImages(body);
+  if (!images.length) {
+    return NextResponse.json(
+      { error: "Agrega al menos una imagen del producto" },
       { status: 400 },
     );
   }
@@ -31,7 +43,8 @@ export async function POST(request: Request) {
     price: Number(body.price),
     compareAtPrice: body.compareAtPrice,
     description: body.description || "",
-    imageUrl: body.imageUrl,
+    images,
+    imageUrl,
     category: body.category,
     featured: Boolean(body.featured),
     onSale: Boolean(body.onSale),

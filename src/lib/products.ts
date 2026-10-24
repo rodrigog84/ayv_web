@@ -21,15 +21,43 @@ function normalizeCompareAt(
   return n;
 }
 
+/** Normaliza `images[]` y mantiene `imageUrl` = primera foto (legacy). */
+export function normalizeProductImages(raw: {
+  images?: unknown;
+  imageUrl?: unknown;
+}): { images: string[]; imageUrl: string } {
+  const fromArray = Array.isArray(raw.images)
+    ? raw.images
+        .map((u) => String(u ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const legacy =
+    typeof raw.imageUrl === "string" ? raw.imageUrl.trim() : "";
+  const seen = new Set<string>();
+  const images: string[] = [];
+  for (const url of fromArray.length > 0 ? fromArray : legacy ? [legacy] : []) {
+    if (seen.has(url)) continue;
+    seen.add(url);
+    images.push(url);
+  }
+  return {
+    images,
+    imageUrl: images[0] || "",
+  };
+}
+
 function normalize(products: Product[]): Product[] {
   return products.map((p) => {
     const price = Number(p.price);
+    const { images, imageUrl } = normalizeProductImages(p);
     return {
       ...p,
       featured: Boolean(p.featured),
       onSale: Boolean(p.onSale),
       price,
       compareAtPrice: normalizeCompareAt(price, p.compareAtPrice),
+      images,
+      imageUrl,
     };
   });
 }
@@ -117,13 +145,15 @@ function slugId(name: string): string {
 
 function toProduct(id: string, input: ProductInput): Product {
   const price = Number(input.price);
+  const { images, imageUrl } = normalizeProductImages(input);
   return {
     id,
     name: input.name.trim(),
     price,
     compareAtPrice: normalizeCompareAt(price, input.compareAtPrice),
     description: input.description.trim(),
-    imageUrl: input.imageUrl.trim(),
+    images,
+    imageUrl,
     category: input.category.trim(),
     featured: Boolean(input.featured),
     onSale: Boolean(input.onSale),

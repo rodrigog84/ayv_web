@@ -54,6 +54,8 @@ export function ProductCard({
   showWhatsApp?: boolean;
 }) {
   const interestUrl = whatsappUrl(productInterestMessage(product.name));
+  const cover =
+    product.images?.[0] || product.imageUrl || "/logo.jpg";
 
   return (
     <article
@@ -68,11 +70,12 @@ export function ProductCard({
       <Link href={`/catalogo/${product.id}`} className="flex flex-1 flex-col">
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           <Image
-            src={product.imageUrl}
+            src={cover}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+            unoptimized={cover.startsWith("/")}
           />
           <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
             {product.onSale ? (

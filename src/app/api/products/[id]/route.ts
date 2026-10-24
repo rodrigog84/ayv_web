@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/auth";
 import { categoryExists } from "@/lib/categories";
-import { deleteProduct, updateProduct } from "@/lib/products";
+import { deleteProduct, normalizeProductImages, updateProduct } from "@/lib/products";
 import type { ProductInput } from "@/lib/types";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -12,9 +12,16 @@ export async function PUT(request: Request, context: RouteContext) {
   }
   const { id } = await context.params;
   const body = (await request.json().catch(() => null)) as ProductInput | null;
-  if (!body?.name || body.price == null || !body.imageUrl || !body.category) {
+  if (!body?.name || body.price == null || !body.category) {
     return NextResponse.json(
       { error: "Faltan campos obligatorios" },
+      { status: 400 },
+    );
+  }
+  const { images, imageUrl } = normalizeProductImages(body);
+  if (!images.length) {
+    return NextResponse.json(
+      { error: "Agrega al menos una imagen del producto" },
       { status: 400 },
     );
   }
@@ -29,7 +36,8 @@ export async function PUT(request: Request, context: RouteContext) {
     price: Number(body.price),
     compareAtPrice: body.compareAtPrice,
     description: body.description || "",
-    imageUrl: body.imageUrl,
+    images,
+    imageUrl,
     category: body.category,
     featured: Boolean(body.featured),
     onSale: Boolean(body.onSale),

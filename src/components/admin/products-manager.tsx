@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { FlagToggle } from "@/components/admin/flag-toggle";
-import { ImageUploadField } from "@/components/admin/image-upload-field";
+import { ProductImagesField } from "@/components/admin/product-images-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,7 +26,7 @@ type FormState = {
   price: string;
   compareAtPrice: string;
   description: string;
-  imageUrl: string;
+  images: string[];
   category: string;
   featured: boolean;
   onSale: boolean;
@@ -38,7 +38,7 @@ function emptyForm(defaultCategory: string): FormState {
     price: "",
     compareAtPrice: "",
     description: "",
-    imageUrl: "",
+    images: [],
     category: defaultCategory,
     featured: false,
     onSale: false,
@@ -46,13 +46,19 @@ function emptyForm(defaultCategory: string): FormState {
 }
 
 function toForm(product: Product): FormState {
+  const images =
+    product.images?.length > 0
+      ? product.images
+      : product.imageUrl
+        ? [product.imageUrl]
+        : [];
   return {
     name: product.name,
     price: String(product.price),
     compareAtPrice:
       product.compareAtPrice != null ? String(product.compareAtPrice) : "",
     description: product.description,
-    imageUrl: product.imageUrl,
+    images,
     category: product.category,
     featured: product.featured,
     onSale: product.onSale,
@@ -112,7 +118,8 @@ export function ProductsManager({
         ? Number(form.compareAtPrice)
         : null,
       description: form.description,
-      imageUrl: form.imageUrl,
+      images: form.images,
+      imageUrl: form.images[0] || "",
       category: form.category,
       featured: form.featured,
       onSale: form.onSale,
@@ -121,6 +128,10 @@ export function ProductsManager({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (form.images.length === 0) {
+      setError("Agrega al menos una foto del producto.");
+      return;
+    }
     setSaving(true);
     setError(null);
     setMessage(null);
@@ -174,6 +185,12 @@ export function ProductsManager({
         price: product.price,
         compareAtPrice: product.compareAtPrice ?? null,
         description: product.description,
+        images:
+          product.images?.length > 0
+            ? product.images
+            : product.imageUrl
+              ? [product.imageUrl]
+              : [],
         imageUrl: product.imageUrl,
         category: product.category,
         featured: field === "featured" ? !product.featured : product.featured,
@@ -300,14 +317,9 @@ export function ProductsManager({
               </Select>
             )}
           </div>
-          <ImageUploadField
-            id="imageUrl"
-            label="Imagen del producto"
-            required
-            folder="products"
-            value={form.imageUrl}
-            onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
-            hint="Sube una foto desde tu computador (JPEG, PNG, WebP o GIF · máx. 4 MB), o pega una URL abajo."
+          <ProductImagesField
+            images={form.images}
+            onChange={(images) => setForm((f) => ({ ...f, images }))}
           />
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
@@ -421,12 +433,24 @@ export function ProductsManager({
                 >
                   <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-muted">
                     <Image
-                      src={product.imageUrl}
+                      src={
+                        product.images?.[0] || product.imageUrl || "/logo.jpg"
+                      }
                       alt={product.name}
                       fill
                       className="object-cover"
                       sizes="80px"
+                      unoptimized={(
+                        product.images?.[0] ||
+                        product.imageUrl ||
+                        ""
+                      ).startsWith("/")}
                     />
+                    {(product.images?.length ?? 0) > 1 ? (
+                      <span className="absolute bottom-1 right-1 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        {product.images.length} fotos
+                      </span>
+                    ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-2">
