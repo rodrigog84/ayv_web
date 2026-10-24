@@ -21,9 +21,9 @@ Variables opcionales (copia `.env.example` a `.env.local`):
 | Variable | Descripción | Default local |
 |---|---|---|
 | `ADMIN_PASSWORD` | Contraseña de `/admin` | `ayv-admin-local` |
-| `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob para guardar `products.json` | *(vacío → usa `data/products.json`)* |
+| `BLOB_READ_WRITE_TOKEN` | Token de Vercel Blob (JSON + subida de imágenes) | *(vacío → archivo local / `public/uploads`)* |
 
-Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/products.json` (adecuado para desarrollo).
+Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/*.json` y las imágenes subidas desde el admin se guardan en `public/uploads/` (solo desarrollo local).
 
 ## Admin
 
@@ -34,6 +34,15 @@ Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/products.json` (adecuado p
    - **Novedades / Avisos** (`/admin/novedades`) — lista + crear/editar/eliminar (título, cuerpo, imagen, fecha/hora, CTA, activo, fijado)
    - **Categorías** (`/admin/categorias`) — crear, renombrar, eliminar (bloqueado si aún hay productos)
 4. Navega entre secciones con la barra superior del admin. En productos puedes activar/desactivar **Oferta** y **Destacado** con un toque.
+
+### Imágenes (productos y novedades)
+
+En crear/editar puedes **subir una foto desde el computador** (file picker) o pegar una URL como antes.
+
+- Formatos: JPEG, PNG, WebP, GIF · máx. **4 MB**
+- Con `BLOB_READ_WRITE_TOKEN`: la API `/api/admin/upload` sube a Vercel Blob y guarda la URL pública en el producto/aviso
+- Sin token en **local**: se escribe bajo `public/uploads/` y se usa una ruta `/uploads/…`
+- Sin token en **Vercel**: el admin muestra un error en español pidiendo configurar Blob (el filesystem de Vercel no sirve para persistir archivos)
 
 Las categorías se guardan en `data/categories.json` (local) o Vercel Blob (`ayv-outlet/categories.json`), igual que los productos. Los avisos usan `data/announcements.json` / `ayv-outlet/announcements.json`.
 
@@ -49,7 +58,7 @@ En el detalle de producto, **Me interesa** abre WhatsApp con un mensaje precarga
 | Variable | Obligatoria | Descripción |
 |---|---|---|
 | `ADMIN_PASSWORD` | Sí en producción | Contraseña de `/admin` (default local: `ayv-admin-local`) |
-| `BLOB_READ_WRITE_TOKEN` | Recomendada en Vercel | Persistencia del catálogo vía [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) |
+| `BLOB_READ_WRITE_TOKEN` | Recomendada en Vercel | Persistencia del catálogo + subida de imágenes vía [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) |
 
 Ver también `.env.example`.
 

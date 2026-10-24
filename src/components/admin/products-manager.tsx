@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { FlagToggle } from "@/components/admin/flag-toggle";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -299,21 +300,15 @@ export function ProductsManager({
               </Select>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">URL de imagen</Label>
-            <Input
-              id="imageUrl"
-              required
-              placeholder="https://… o /products/…"
-              value={form.imageUrl}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, imageUrl: e.target.value }))
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              Usa un enlace directo a la foto (por ejemplo Unsplash o Blob).
-            </p>
-          </div>
+          <ImageUploadField
+            id="imageUrl"
+            label="Imagen del producto"
+            required
+            folder="products"
+            value={form.imageUrl}
+            onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+            hint="Sube una foto desde tu computador (JPEG, PNG, WebP o GIF · máx. 4 MB), o pega una URL abajo."
+          />
           <div className="space-y-2">
             <Label htmlFor="description">Descripción</Label>
             <Textarea
