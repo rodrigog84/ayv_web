@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
         hostname: "plus.unsplash.com",
         pathname: "/**",
       },
+      // Host de cada store: <storeId>.public.blob.vercel-storage.com
       {
         protocol: "https",
         hostname: "*.public.blob.vercel-storage.com",

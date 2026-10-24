@@ -24,6 +24,10 @@
 .DS_Store
 *.pem
 
+# local image uploads (dev fallback when BLOB_READ_WRITE_TOKEN is unset)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*

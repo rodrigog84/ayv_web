@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { FlagToggle } from "@/components/admin/flag-toggle";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -215,30 +216,25 @@ export function AnnouncementsManager({
               }
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="avisoWhen">Fecha / hora</Label>
-              <Input
-                id="avisoWhen"
-                placeholder="Viernes 19:30"
-                value={form.eventDateTime}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, eventDateTime: e.target.value }))
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="avisoImage">URL de imagen (opcional)</Label>
-              <Input
-                id="avisoImage"
-                placeholder="/announcements/… o https://…"
-                value={form.imageUrl}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, imageUrl: e.target.value }))
-                }
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="avisoWhen">Fecha / hora</Label>
+            <Input
+              id="avisoWhen"
+              placeholder="Viernes 19:30"
+              value={form.eventDateTime}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, eventDateTime: e.target.value }))
+              }
+            />
           </div>
+          <ImageUploadField
+            id="avisoImage"
+            label="Imagen del aviso (opcional)"
+            folder="announcements"
+            value={form.imageUrl}
+            onChange={(imageUrl) => setForm((f) => ({ ...f, imageUrl }))}
+            hint="Sube una foto desde tu computador (JPEG, PNG, WebP o GIF · máx. 4 MB), o pega una URL abajo."
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="avisoCtaLabel">Texto del botón (opcional)</Label>
