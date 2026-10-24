@@ -74,19 +74,6 @@ export function AdminLogin() {
             {loading ? "Entrando…" : "Entrar al panel"}
           </Button>
         </form>
-
-        <div className="mt-6 rounded-lg border border-sky/25 bg-accent/60 px-3 py-3 text-xs leading-relaxed text-charcoal">
-          <p className="font-medium text-foreground">Demo local</p>
-          <p className="mt-1">
-            Si no configuraste{" "}
-            <code className="text-foreground">ADMIN_PASSWORD</code>, usa:{" "}
-            <span className="font-semibold text-foreground">ayv-admin-local</span>
-          </p>
-          <p className="mt-1 text-muted-foreground">
-            En producción (Vercel) define tu propia contraseña en las variables
-            de entorno.
-          </p>
-        </div>
       </div>
     </div>
   );
