@@ -30,19 +30,22 @@ Sin `BLOB_READ_WRITE_TOKEN`, el CRUD escribe en `data/*.json` y las imágenes su
 1. Ve a `/admin`
 2. Ingresa la contraseña (`ADMIN_PASSWORD` o **`ayv-admin-local`** en local)
 3. Tras el login verás el **perfil administrador** con accesos a:
-   - **Productos** (`/admin/productos`) — lista + crear/editar/eliminar (imagen, precio, compareAt/oferta, destacado, categoría, descripción)
+   - **Productos** (`/admin/productos`) — lista + crear/editar/eliminar (varias fotos, portada, precio, compareAt/oferta, destacado, categoría, descripción)
    - **Novedades / Avisos** (`/admin/novedades`) — lista + crear/editar/eliminar (título, cuerpo, imagen, fecha/hora, CTA, activo, fijado)
    - **Categorías** (`/admin/categorias`) — crear, renombrar, eliminar (bloqueado si aún hay productos)
 4. Navega entre secciones con la barra superior del admin. En productos puedes activar/desactivar **Oferta** y **Destacado** con un toque.
 
 ### Imágenes (productos y novedades)
 
-En crear/editar puedes **subir una foto desde el computador** (file picker) o pegar una URL como antes.
+En crear/editar puedes **subir fotos desde el computador** (file picker) o pegar URLs.
 
+- **Productos:** varias fotos por ítem (`images[]`). La primera es la **portada** del catálogo; en el detalle se muestra un carrusel. En admin puedes reordenar, eliminar o marcar portada.
+- **Novedades:** una imagen (igual que antes).
 - Formatos: JPEG, PNG, WebP, GIF · máx. **4 MB**
-- Con `BLOB_READ_WRITE_TOKEN`: la API `/api/admin/upload` sube a Vercel Blob y guarda la URL pública en el producto/aviso
+- Con `BLOB_READ_WRITE_TOKEN`: la API `/api/admin/upload` sube a Vercel Blob y guarda la URL pública
 - Sin token en **local**: se escribe bajo `public/uploads/` y se usa una ruta `/uploads/…`
 - Sin token en **Vercel**: el admin muestra un error en español pidiendo configurar Blob (el filesystem de Vercel no sirve para persistir archivos)
+- Datos legacy con solo `imageUrl` se migran automáticamente a `images: [imageUrl]`
 
 Las categorías se guardan en `data/categories.json` (local) o Vercel Blob (`ayv-outlet/categories.json`), igual que los productos. Los avisos usan `data/announcements.json` / `ayv-outlet/announcements.json`.
 

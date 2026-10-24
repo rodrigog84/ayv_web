@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { ProductImageCarousel } from "@/components/product-image-carousel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCLP } from "@/lib/format";
@@ -55,16 +55,18 @@ export default async function ProductDetailPage({ params }: PageProps) {
       </Link>
 
       <div className="mt-6 grid gap-10 lg:grid-cols-2">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted lg:aspect-square">
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            priority
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
-          <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+        <ProductImageCarousel
+          key={product.id}
+          images={
+            product.images?.length > 0
+              ? product.images
+              : product.imageUrl
+                ? [product.imageUrl]
+                : []
+          }
+          alt={product.name}
+        >
+          <div className="absolute left-4 top-4 z-10 flex flex-wrap gap-2">
             {product.onSale ? (
               <Badge className="h-7 border-0 bg-sky px-3 text-xs font-bold uppercase tracking-wide text-white hover:bg-sky">
                 Oferta
@@ -76,7 +78,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
               </Badge>
             ) : null}
           </div>
-        </div>
+        </ProductImageCarousel>
 
         <div className="flex flex-col">
           <Badge variant="secondary" className="w-fit">

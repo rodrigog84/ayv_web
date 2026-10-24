@@ -5,13 +5,24 @@ export type Product = {
   /** Precio anterior (tachado) cuando hay oferta. */
   compareAtPrice?: number | null;
   description: string;
+  /**
+   * Imagen de portada para tarjetas del catálogo.
+   * Siempre igual a `images[0]` (compatibilidad con datos legacy).
+   */
   imageUrl: string;
+  /** Todas las fotos del producto; la primera es la portada. */
+  images: string[];
   category: string;
   featured: boolean;
   onSale: boolean;
 };
 
-export type ProductInput = Omit<Product, "id"> & { id?: string };
+export type ProductInput = Omit<Product, "id"> & {
+  id?: string;
+  /** Aceptado en API; se migra a `images[0]` si no hay `images`. */
+  imageUrl?: string;
+  images?: string[];
+};
 
 export type Category = {
   id: string;
