@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { PhotoTips } from "@/components/admin/photo-tips";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,9 +118,9 @@ export function ProductImagesField({
         <Label htmlFor={`${id}-file`}>Fotos del producto</Label>
         <p className="text-xs text-muted-foreground">
           Sube una o varias fotos desde tu computador, o agrega URLs. La primera
-          es la <strong>portada</strong> del catálogo. JPEG, PNG, WebP o GIF ·
-          máx. 4 MB c/u.
+          es la <strong>portada</strong> del catálogo.
         </p>
+        <PhotoTips variant="product" />
         <div className="flex flex-wrap items-center gap-2">
           <Input
             id={`${id}-file`}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { PhotoTips } from "@/components/admin/photo-tips";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ type Props = {
   required?: boolean;
   folder?: "products" | "announcements";
   hint?: string;
+  /** Show compact photo tips under the label. Default: announcements tips when folder is announcements. */
+  showTips?: boolean;
   className?: string;
 };
 
@@ -28,10 +31,14 @@ export function ImageUploadField({
   required = false,
   folder = "products",
   hint,
+  showTips,
   className,
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const tipsVisible = showTips ?? folder === "announcements";
+  const tipsVariant =
+    folder === "announcements" ? "announcement" : "product";
 
   async function onFileChange(
     file: File | undefined,
@@ -74,6 +81,7 @@ export function ImageUploadField({
     <div className={cn("space-y-3", className)}>
       <div className="space-y-2">
         <Label htmlFor={`${id}-file`}>{label}</Label>
+        {tipsVisible ? <PhotoTips variant={tipsVariant} /> : null}
         <div className="flex flex-wrap items-center gap-2">
           <Input
             id={`${id}-file`}
